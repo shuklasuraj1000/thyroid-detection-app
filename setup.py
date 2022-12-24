@@ -19,7 +19,7 @@ def get_requirements()->List[str]:
 
 setup(
     name="thyroid_test",
-    version="0.0.2",
+    version="0.0.1",
     author="suraj shukla",
     author_email="shuklasuraj1000@gmail.com",
     packages = find_packages(),
