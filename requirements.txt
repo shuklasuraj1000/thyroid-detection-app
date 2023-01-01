@@ -18,4 +18,5 @@ PyYAML
 numpy
 scikit-learn
 apache-airflow
+collection==0.1.6
 -e .

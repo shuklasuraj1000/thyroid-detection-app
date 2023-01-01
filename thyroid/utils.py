@@ -2,10 +2,72 @@ import pandas as pd
 from thyroid.logger import logging
 from thyroid.exception import thyroidException
 from thyroid.config import mongo_client
+from collections import Counter
+from thyroid.config import numeric_features
 import os,sys
 import yaml
 import numpy as np
 import dill
+
+numeric_feature= numeric_features
+
+def missing_data_handler(df)->pd.DataFrame:
+    """
+    Description: This function return collection as dataframe
+    =========================================================
+    Params:
+    data: df (data frame)
+    =========================================================
+    return Pandas dataframe of a collection
+    """
+    try:
+        logging.info("missing data handling initiated")
+        #replace na with Nan
+        df.replace(to_replace='?',value=np.NAN,inplace=True)
+        logging.info("Replaced ? with NaN")
+
+        # Data typecasting of numerical features.
+        for i in numeric_feature:
+            df[i]=df[i].astype('float')
+        logging.info("numeric feature converted to float")
+
+        categorical_features = list((Counter(df.columns) - Counter(numeric_feature)).elements())
+        logging.info(categorical_features)
+
+        # Adding mode value for missing categorical data:
+        for i in categorical_features:
+            df[i].fillna(df[i].mode(), inplace=True)
+        logging.info("categorical missing data filled")
+
+        # Exception 'sex' column creatings issue, handling seperately. (################################)
+        df['sex'].fillna(df['sex'].mode()[0], inplace=True)
+
+        # Adding mean value for missing numerical data:
+        for j in numeric_features:
+            df[j].fillna(df[j].mean(), inplace=True)
+        logging.info("numerical missing data filled")
+        
+        # Trimming string in target calumn.
+        for i in range(len(df['status'])):
+            df['status'][i]=str(df['status'][i])[slice(3)]
+            if df['status'][i]=='neg':
+                df['status'][i]='neg'
+            else:
+                df['status'][i]='pos'
+        # Dropping unrelevant column which has one unique value.
+        dump_col =[]
+        for i in [j for j in df.columns]:
+            if len(df[i].unique())>=2:
+                pass
+            else:
+                dump_col.append(i)
+        logging.info(f"column to drop which have one unique category : {dump_col}")
+        df=df.drop(dump_col, axis=1)
+        logging.info(f"columns after dropping : {df.columns}")
+        logging.info(f"sex unique value : {df['sex'].unique()}")
+        return df
+    except Exception as e:
+        raise thyroidException(e, sys)
 
 def get_collection_as_dataframe(database_name:str,collection_name:str)->pd.DataFrame:
     """
@@ -25,7 +87,10 @@ def get_collection_as_dataframe(database_name:str,collection_name:str)->pd.DataF
             logging.info(f"Dropping column: _id ")
             df = df.drop("_id",axis=1)
         logging.info(f"Row and columns in df: {df.shape}")
-        return df
+
+        df_trans = missing_data_handler(df=df)
+        
+        return df_trans
     except Exception as e:
         raise thyroidException(e, sys)
 
@@ -56,7 +121,7 @@ def save_object(file_path: str, obj: object) -> None:
             dill.dump(obj, file_obj)
         logging.info("Exited the save_object method of utils")
     except Exception as e:
-        raise SensorException(e, sys) from e
+        raise thyroidException(e, sys) from e
 
 
 def load_object(file_path: str, ) -> object:
@@ -66,7 +131,7 @@ def load_object(file_path: str, ) -> object:
         with open(file_path, "rb") as file_obj:
             return dill.load(file_obj)
     except Exception as e:
-        raise SensorException(e, sys) from e
+        raise thyroidException(e, sys) from e
 
 def save_numpy_array_data(file_path: str, array: np.array):
     """
@@ -80,7 +145,7 @@ def save_numpy_array_data(file_path: str, array: np.array):
         with open(file_path, "wb") as file_obj:
             np.save(file_obj, array)
     except Exception as e:
-        raise SensorException(e, sys) from e
+        raise thyroidException(e, sys) from e
 
 def load_numpy_array_data(file_path: str) -> np.array:
     """
@@ -92,4 +157,4 @@ def load_numpy_array_data(file_path: str) -> np.array:
         with open(file_path, "rb") as file_obj:
             return np.load(file_obj)
     except Exception as e:
-        raise SensorException(e, sys) from e
+        raise thyroidException(e, sys) from e

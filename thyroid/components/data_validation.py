@@ -7,7 +7,8 @@ import os,sys
 import pandas as pd
 from thyroid import utils
 import numpy as np
-from thyroid.config import TARGET_COLUMN
+from thyroid.config import TARGET_COLUMN, numeric_features
+from thyroid.utils import missing_data_handler
 
 
 
@@ -79,8 +80,8 @@ class DataValidation:
         try:
             drift_report=dict()
 
-            base_columns = base_df.columns
-            current_columns = current_df.columns
+            base_columns = numeric_features
+            current_columns = numeric_features
 
             for base_column in base_columns:
                 base_data,current_data = base_df[base_column],current_df[base_column]
@@ -109,9 +110,10 @@ class DataValidation:
     def initiate_data_validation(self)->artifact_entity.DataValidationArtifact:
         try:
             logging.info(f"Reading base dataframe")
-            base_df = pd.read_csv(self.data_validation_config.base_file_path)
-            base_df.replace({"?":np.NAN},inplace=True)
-            logging.info(f"Replace na value in base df")
+            base_df1 = pd.read_csv(self.data_validation_config.base_file_path)
+            base_df = missing_data_handler(df=base_df1)
+            #base_df.replace({"?":np.NAN},inplace=True)
+            #logging.info(f"Replace na value in base df")
             #base_df has na as null
             logging.info(f"Drop null values colums from base df")
             base_df=self.drop_missing_values_columns(df=base_df,report_key_name="missing_values_within_base_dataset")
@@ -126,10 +128,10 @@ class DataValidation:
             logging.info(f"Drop null values colums from test df")
             test_df = self.drop_missing_values_columns(df=test_df,report_key_name="missing_values_within_test_dataset")
             
-            exclude_columns = [TARGET_COLUMN]
-            base_df = utils.convert_columns_float(df=base_df, exclude_columns=exclude_columns)
-            train_df = utils.convert_columns_float(df=train_df, exclude_columns=exclude_columns)
-            test_df = utils.convert_columns_float(df=test_df, exclude_columns=exclude_columns)
+            #exclude_columns = [TARGET_COLUMN]
+            #base_df = utils.convert_columns_float(df=base_df, exclude_columns=exclude_columns)
+            #train_df = utils.convert_columns_float(df=train_df, exclude_columns=exclude_columns)
+            #test_df = utils.convert_columns_float(df=test_df, exclude_columns=exclude_columns)
 
 
             logging.info(f"Is all required columns present in train df")
