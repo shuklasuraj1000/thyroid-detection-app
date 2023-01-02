@@ -47,12 +47,16 @@ class ModelEvaluation:
             logging.info("Finding location of transformer model and target encoder")
             transformer_path = self.model_resolver.get_latest_transformer_path()
             model_path = self.model_resolver.get_latest_model_path()
+            input_encoder_path = self.model_resolver.get_latest_input_encoder_path()
             target_encoder_path = self.model_resolver.get_latest_target_encoder_path()
+            print(model_path)
+            print(input_encoder_path)
 
             logging.info("Previous trained objects of transformer, model and target encoder")
             #Previous trained  objects
             transformer = load_object(file_path=transformer_path)
             model = load_object(file_path=model_path)
+            input_encoder = load_object(file_path=input_encoder_path)
             target_encoder = load_object(file_path=target_encoder_path)
             
 
@@ -60,6 +64,7 @@ class ModelEvaluation:
             #Currently trained model objects
             current_transformer = load_object(file_path=self.data_transformation_artifact.transform_object_path)
             current_model  = load_object(file_path=self.model_trainer_artifact.model_path)
+            current_input_encoder = load_object(file_path=self.data_transformation_artifact.input_encoder_path)
             current_target_encoder = load_object(file_path=self.data_transformation_artifact.target_encoder_path)
             
 
@@ -69,16 +74,31 @@ class ModelEvaluation:
             y_true =target_encoder.transform(target_df)
             # accuracy using previous trained model
             
-            input_feature_name = list(transformer.feature_names_in_)
-            input_arr =transformer.transform(test_df[input_feature_name])
+            input_feature_name_num = list(transformer.feature_names_in_)
+            input_feature_name_cat = list(input_encoder.feature_names_in_)
+            input_arr_num =transformer.transform(test_df[input_feature_name_num])
+            input_arr_cat =input_encoder.transform(test_df[input_feature_name_cat])
+
+            input_arr = np.c_(input_arr_cat,input_arr_num)
+            logging.info(test_df[input_feature_name_cat + input_feature_name_num].columns)
+
             y_pred = model.predict(input_arr)
             print(f"Prediction using previous model: {target_encoder.inverse_transform(y_pred[:5])}")
             previous_model_score = f1_score(y_true=y_true, y_pred=y_pred)
             logging.info(f"Accuracy using previous trained model: {previous_model_score}")
            
-            # accuracy using current trained model
-            input_feature_name = list(current_transformer.feature_names_in_)
-            input_arr =current_transformer.transform(test_df[input_feature_name])
+            # accuracy using current trained model >>........
+            #>input_feature_name = list(current_transformer.feature_names_in_)
+            #>input_arr =current_transformer.transform(test_df[input_feature_name])
+
+            input_feature_name_num = list(current_transformer.feature_names_in_)
+            input_feature_name_cat = list(current_input_encoder.feature_names_in_)
+            input_arr_num =current_transformer.transform(test_df[input_feature_name_num])
+            input_arr_cat =current_input_encoder.transform(test_df[input_feature_name_cat])
+
+            input_arr = np.c_(input_arr_cat,input_arr_num)
+
+
             y_pred = current_model.predict(input_arr)
             y_true =current_target_encoder.transform(target_df)
             print(f"Prediction using trained model: {current_target_encoder.inverse_transform(y_pred[:5])}")

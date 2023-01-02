@@ -121,8 +121,11 @@ class DataTransformation:
             utils.save_object(file_path=self.data_transformation_config.transform_object_path,
              obj=transformation_pipleine)
 
+            utils.save_object(file_path=self.data_transformation_config.input_encoder_path,
+             obj=enc)
+
             utils.save_object(file_path=self.data_transformation_config.target_encoder_path,
-            obj=label_encoder)
+             obj=label_encoder)
 
 
 
@@ -130,6 +133,7 @@ class DataTransformation:
                 transform_object_path=self.data_transformation_config.transform_object_path,
                 transformed_train_path = self.data_transformation_config.transformed_train_path,
                 transformed_test_path = self.data_transformation_config.transformed_test_path,
+                input_encoder_path = self.data_transformation_config.input_encoder_path,
                 target_encoder_path = self.data_transformation_config.target_encoder_path
 
             )
