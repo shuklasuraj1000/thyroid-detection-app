@@ -94,8 +94,7 @@ class DataTransformation:
             input_feature_train_arr = np.c_[input_feature_train_arr_cat, input_feature_train_arr_num]
            
             input_feature_test_arr = np.c_[input_feature_test_arr_cat, input_feature_test_arr_num]
-           
-
+            
             smt = SMOTETomek(random_state=42)
             logging.info(f"Before resampling in training set Input: {input_feature_train_arr.shape} Target:{target_feature_train_arr.shape}")
             input_feature_train_arr, target_feature_train_arr = smt.fit_resample(input_feature_train_arr, target_feature_train_arr)
@@ -104,7 +103,7 @@ class DataTransformation:
             logging.info(f"Before resampling in testing set Input: {input_feature_test_arr.shape} Target:{target_feature_test_arr.shape}")
             input_feature_test_arr, target_feature_test_arr = smt.fit_resample(input_feature_test_arr, target_feature_test_arr)
             logging.info(f"After resampling in testing set Input: {input_feature_test_arr.shape} Target:{target_feature_test_arr.shape}")
-
+            
             #target encoder
             train_arr = np.c_[input_feature_train_arr, target_feature_train_arr ]
             test_arr = np.c_[input_feature_test_arr, target_feature_test_arr]
