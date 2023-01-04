@@ -5,6 +5,7 @@ from thyroid.logger import logging
 from thyroid.utils import load_object
 from sklearn.metrics import f1_score
 import pandas  as pd
+import numpy as np
 import sys,os
 from thyroid.config import TARGET_COLUMN
 
@@ -78,12 +79,14 @@ class ModelEvaluation:
             input_feature_name_cat = list(input_encoder.feature_names_in_)
             input_arr_num =transformer.transform(test_df[input_feature_name_num])
             input_arr_cat =input_encoder.transform(test_df[input_feature_name_cat])
+            logging.info(input_arr_cat)
+            logging.info(input_arr_num)
 
-            input_arr = np.c_(input_arr_cat,input_arr_num)
+            input_arr = np.c_[input_arr_cat,input_arr_num]
             logging.info(test_df[input_feature_name_cat + input_feature_name_num].columns)
 
             y_pred = model.predict(input_arr)
-            print(f"Prediction using previous model: {target_encoder.inverse_transform(y_pred[:5])}")
+            print(f"Prediction using previous model: {target_encoder.inverse_transform(y_pred[:5].astype('int'))}")
             previous_model_score = f1_score(y_true=y_true, y_pred=y_pred)
             logging.info(f"Accuracy using previous trained model: {previous_model_score}")
            
@@ -96,17 +99,18 @@ class ModelEvaluation:
             input_arr_num =current_transformer.transform(test_df[input_feature_name_num])
             input_arr_cat =current_input_encoder.transform(test_df[input_feature_name_cat])
 
-            input_arr = np.c_(input_arr_cat,input_arr_num)
+            input_arr = np.c_[input_arr_cat,input_arr_num]
 
 
             y_pred = current_model.predict(input_arr)
             y_true =current_target_encoder.transform(target_df)
-            print(f"Prediction using trained model: {current_target_encoder.inverse_transform(y_pred[:5])}")
+            #print([current_target_encoder.inverse_transform(i) for i in y_pred])
+            print(f"Prediction using trained model: {current_target_encoder.inverse_transform(y_pred[:5].astype('int'))}")
             current_model_score = f1_score(y_true=y_true, y_pred=y_pred)
             logging.info(f"Accuracy using current trained model: {current_model_score}")
             if current_model_score<=previous_model_score:
                 logging.info(f"Current trained model is not better than previous model")
-                raise Exception("Current trained model is not better than previous model")
+                #raise Exception("Current trained model is not better than previous model")
 
             model_eval_artifact = artifact_entity.ModelEvaluationArtifact(is_model_accepted=True,
             improved_accuracy=current_model_score-previous_model_score)

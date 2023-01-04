@@ -42,4 +42,4 @@ def start_batch_prediction(input_file_path):
         df.to_csv(prediction_file_path,index=False,header=True)
         return prediction_file_path
     except Exception as e:
-        raise SensorException(e, sys)
+        raise thyroidException(e, sys)
