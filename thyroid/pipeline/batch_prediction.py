@@ -20,9 +20,18 @@ def start_batch_prediction(input_file_path):
         
         logging.info(f"Loading transformer to transform dataset")
         transformer = load_object(file_path=model_resolver.get_latest_transformer_path())
-        
-        input_feature_names =  list(transformer.feature_names_in_)
-        input_arr = transformer.transform(df[input_feature_names])
+        input_encoder = load_object(file_path=model_resolver.get_latest_input_encoder_path())
+
+        input_feature_name_num = list(transformer.feature_names_in_)
+        input_feature_name_cat = list(input_encoder.feature_names_in_)
+        input_arr_num =transformer.transform(df[input_feature_name_num])
+        input_arr_cat =input_encoder.transform(df[input_feature_name_cat])
+        logging.info(input_arr_cat)
+        logging.info(input_arr_num)
+
+        input_arr = np.c_[input_arr_cat,input_arr_num]
+        logging.info(df[input_feature_name_cat + input_feature_name_num].columns)
+
 
         logging.info(f"Loading model to make prediction")
         model = load_object(file_path=model_resolver.get_latest_model_path())
@@ -31,7 +40,7 @@ def start_batch_prediction(input_file_path):
         logging.info(f"Target encoder to convert predicted column into categorical")
         target_encoder = load_object(file_path=model_resolver.get_latest_target_encoder_path())
 
-        cat_prediction = target_encoder.inverse_transform(prediction)
+        cat_prediction = target_encoder.inverse_transform(prediction.astype('int'))
 
         df["prediction"]=prediction
         df["cat_pred"]=cat_prediction
