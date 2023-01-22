@@ -43,6 +43,7 @@ def missing_data_handler(df)->pd.DataFrame:
         df['sex'].fillna(df['sex'].mode()[0], inplace=True)
 
         # Adding mean value for missing numerical data:
+
         for j in numeric_features:
             df[j].fillna(df[j].mean(), inplace=True)
         logging.info("numerical missing data filled")
